@@ -6,7 +6,7 @@ export default function chattingReducer(
   action: AnyAction
 ) {
   const namesSet: Set<any> = new Set();
-  const avatars: Record<string, string> = {};
+  let avatars: Record<string, string> = {};
   const AVATAR_NUMBER = 9;
   let nameIterator = 0;
   switch (action.type) {
@@ -21,6 +21,33 @@ export default function chattingReducer(
       return {
         ...state,
         messagesList: action!.payload,
+        avatars,
+      };
+    case "SEND_MESSAGE":
+      return {
+        ...state,
+        messagesList: [...state.messagesList, action!.payload],
+        lastMessage: action!.payload,
+      };
+    case "ADD_AVATAR":
+      avatars = { ...state.avatars };
+      avatars[`${action!.payload as string}`] = `${
+        (Object.keys(avatars).length % AVATAR_NUMBER) + 1
+      }`;
+      return {
+        ...state,
+        avatars,
+      };
+    case "ADD_LAST_MESSAGE":
+      avatars = { ...state.avatars };
+      if (!avatars[action!.payload.name]) {
+        avatars[action!.payload.name] = `${
+          (Object.keys(state.avatars).length % AVATAR_NUMBER) + 1
+        }`;
+      }
+      return {
+        ...state,
+        lastMessage: action!.payload,
         avatars,
       };
     case "SET_NAME":

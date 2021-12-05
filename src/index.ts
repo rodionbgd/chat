@@ -1,11 +1,18 @@
 import "./style.css";
 
-import { createStore, applyMiddleware, Unsubscribe } from "redux";
+import { createStore, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 
-import { Message, State } from "./types";
+import { Avatar, Message, State } from "./types";
 import chattingReducer from "./reducer";
-import { getMessages, setName } from "./actions";
+import {
+  addAvatar,
+  addLastMessage,
+  getMessages,
+  sendMessageThunk,
+  setName,
+} from "./actions";
+import { observeWithEventSource } from "./message_api";
 
 export const initialState: State = {
   messagesList: [],
@@ -20,58 +27,97 @@ const store = createStore(
   applyMiddleware(thunk)
 );
 
+const formatter = new Intl.DateTimeFormat("ru-RU", {
+  weekday: "short",
+  day: "numeric",
+  month: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  year: "2-digit",
+});
+
+function replaceSmiles(message: string) {
+  let newMessage = message.replace(/[:]-?\)+/g, `\u{1F600}`);
+  newMessage = newMessage.replace(/[:]-?\(+/g, `\u{1F612}`);
+  newMessage = newMessage.replace(/[:]-?[pP]/g, `\u{1F60B}`);
+  newMessage = newMessage.replace(/[:]-?[dD]/g, `\u{1F601}`);
+  newMessage = newMessage.replace(/[:]-?[xX8]/g, `\u{1F606}`);
+  return newMessage;
+}
+
+function createMessage(message: Message, currentUser: string, avatars: Avatar) {
+  if (!message || !message.date || !message.name) return "";
+  let messageHTML = "";
+  const date = formatter.format(new Date(message.date));
+  let textAlignClass = "";
+  let messageTypeClass = "other-message";
+  let messageContentArr = [
+    `<span>${date.replace(/,/g, "")}</span>`,
+    `<span class="user-name">${message.name}</span>`,
+  ];
+  if (currentUser === message.name) {
+    textAlignClass = "text-right";
+    messageTypeClass = "my-message";
+    messageContentArr.push(`<img src="./img/user.png" alt="avatar">`);
+  } else {
+    if (!Object.hasOwnProperty.call(avatars, message.name)) {
+      // FIXME dispatch in dispatch
+      store.dispatch(addAvatar(message.name));
+    }
+    messageContentArr.push(
+      `<img src="./img/${avatars[message.name]}.png" alt="avatar">`
+    );
+    messageContentArr = messageContentArr.reverse();
+  }
+  messageHTML = `<li class="clearfix">`;
+  messageHTML += `<div class="message-data ${textAlignClass}">`;
+  messageHTML += `<div>`;
+  messageContentArr.forEach((item) => {
+    messageHTML += item;
+  });
+  messageHTML += `</div>`;
+  messageHTML += `<div><span class="message ${messageTypeClass}">${message.message}</span></div>`;
+  messageHTML += `</li>`;
+  return replaceSmiles(messageHTML);
+}
+
 function renderMessageField(
   chat: HTMLUListElement,
   chatHistory: HTMLDivElement
 ) {
-  let userMessageHTML = "";
-  const formatter = new Intl.DateTimeFormat("ru-RU", {
-    weekday: "short",
-    day: "numeric",
-    month: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    year: "2-digit",
-  });
-  const messages = store.getState().messagesList;
-  const currentUser = store.getState().name;
-  const { avatars } = store.getState();
+  const state = store.getState();
+  const messages = state.messagesList;
+  const currentUser = state.name;
+  const { avatars } = state;
+  let allMessagesHTML = "";
   messages.slice(-30).forEach((message) => {
-    if (!message || !message.name || !message.message || !message.date) return;
-    const date = formatter.format(new Date(message.date));
-    let textAlignClass = "";
-    let messageTypeClass = "other-message";
-    let messageContentArr = [
-      `<span>${date.replace(/,/g, "")}</span>`,
-      `<span class="user-name">${message.name}</span>`,
-    ];
-    if (currentUser === message.name) {
-      textAlignClass = "text-right";
-      messageTypeClass = "my-message";
-      messageContentArr.push(`<img src="./img/user.png" alt="avatar">`);
-    } else {
-      messageContentArr.push(
-        `<img src="./img/${avatars[message.name]}.png" alt="avatar">`
-      );
-      messageContentArr = messageContentArr.reverse();
+    const messageHTML = createMessage(message, currentUser, avatars);
+    if (messageHTML) {
+      allMessagesHTML += messageHTML;
     }
-    userMessageHTML = `<li class="clearfix">`;
-    userMessageHTML += `<div class="message-data ${textAlignClass}">`;
-    userMessageHTML += `<div>`;
-    messageContentArr.forEach((item) => {
-      userMessageHTML += item;
-    });
-    userMessageHTML += `</div>`;
-    userMessageHTML += `<div>
-                                <span class="message ${messageTypeClass}">${message.message}</span>
-                            </div>`;
-    userMessageHTML += `</li>`;
-    // eslint-disable-next-line no-param-reassign
-    chat.innerHTML += userMessageHTML;
   });
-  setTimeout(() => {
+  chatHistory.scrollTo(0, chatHistory.scrollHeight);
+  return allMessagesHTML;
+}
+
+export function updateMessage(message: Message) {
+  const chat = <HTMLUListElement>document.getElementById("chat");
+  const chatHistory = <HTMLDivElement>document.getElementById("chat-history");
+  let state = store.getState();
+  if (
+    !message ||
+    !message.date ||
+    !message.name ||
+    JSON.stringify(state.lastMessage) === JSON.stringify(message)
+  )
+    return;
+  store.dispatch(addLastMessage(message));
+  state = store.getState();
+  const messageHTML = createMessage(message, state.name, state.avatars);
+  if (messageHTML) {
+    chat.insertAdjacentHTML("beforeend", messageHTML);
     chatHistory.scrollTo(0, chatHistory.scrollHeight);
-  }, 0);
+  }
 }
 
 export function init() {
@@ -81,22 +127,30 @@ export function init() {
   const chatHistory = <HTMLDivElement>document.getElementById("chat-history");
   const nameBtn = <HTMLButtonElement>document.getElementById("name-btn");
   const nameInput = <HTMLInputElement>document.getElementById("name-input");
-  // const sendMessage = <HTMLButtonElement>(
-  //   document.getElementById("send-message")
-  // );
-  // const messageInput = <HTMLInputElement>(
-  //   document.getElementById("message-input")
-  // );
+  const sendMessageBtn = <HTMLButtonElement>(
+    document.getElementById("send-message")
+  );
+  const messageInput = <HTMLInputElement>(
+    document.getElementById("message-input")
+  );
 
-  let renderMessageFieldSub: Unsubscribe;
   const currentUser = store.getState().name;
   if (currentUser) {
     nameInput.value = currentUser;
   }
   store.dispatch(getMessages() as any);
 
+  // Subscribers
+  const renderMessageFieldSub = store.subscribe(() => {
+    chat.innerHTML = renderMessageField(chat, chatHistory);
+  });
+  store.subscribe(() => {
+    observeWithEventSource(updateMessage);
+  });
+
+  // Listeners
   nameBtn.addEventListener("click", () => {
-    if (!nameInput) return;
+    if (!nameInput.value) return;
     store.dispatch(setName(nameInput.value));
     renderMessageFieldSub();
     localStorage.setItem("name", nameInput.value);
@@ -106,9 +160,22 @@ export function init() {
     welcomeTitle.classList.add("remove-welcome");
     chatWrapper.classList.remove("blur");
   });
-  renderMessageFieldSub = store.subscribe(() => {
-    chat.innerHTML = "";
-    renderMessageField(chat, chatHistory);
+
+  sendMessageBtn.addEventListener("click", () => {
+    if (!messageInput.value) {
+      return;
+    }
+    const message: Message = {
+      name: store.getState().name,
+      message: messageInput.value,
+      date: new Date(),
+    };
+    store.dispatch(sendMessageThunk(message) as any);
+    messageInput.value = "";
+  });
+
+  messageInput.addEventListener("input", () => {
+    messageInput.value = replaceSmiles(messageInput.value);
   });
 }
 

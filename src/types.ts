@@ -4,9 +4,10 @@ export type Message = {
   date: Date;
 };
 
+export type Avatar = Record<string, string>;
 export type State = {
   messagesList: Message[];
   name: string;
-  avatars: Record<string, string>;
+  avatars: Avatar;
   lastMessage: Message;
 };
