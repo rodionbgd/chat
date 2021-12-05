@@ -1,5 +1,5 @@
 const config = {
-  firebaseBaseUrl: "https://otus-js-chat-4ed79-default-rtdb.firebaseio.com",
+  firebaseBaseUrl: "https://chat-eee97-default-rtdb.firebaseio.com",
   firebaseCollection: "messages.json",
 };
 

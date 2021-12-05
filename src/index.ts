@@ -165,10 +165,9 @@ export function init() {
     if (!messageInput.value) {
       return;
     }
-    const message: Message = {
+    const message: Partial<Message> = {
       name: store.getState().name,
       message: messageInput.value,
-      date: new Date(),
     };
     store.dispatch(sendMessageThunk(message) as any);
     messageInput.value = "";
