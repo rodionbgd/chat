@@ -11,8 +11,7 @@ export default function chattingReducer(
   let nameIterator = 0;
   switch (action.type) {
     case "GET_MESSAGES":
-      if(!action.payload)
-        return state;
+      if (!action.payload) return state;
       action!.payload.forEach((message: any) => {
         if (typeof message.name === "string") namesSet.add(message.name);
       });
@@ -31,18 +30,9 @@ export default function chattingReducer(
         messagesList: [...state.messagesList, action!.payload],
         lastMessage: action!.payload,
       };
-    case "ADD_AVATAR":
-      avatars = { ...state.avatars };
-      avatars[`${action!.payload as string}`] = `${
-        (Object.keys(avatars).length % AVATAR_NUMBER) + 1
-      }`;
-      return {
-        ...state,
-        avatars,
-      };
     case "ADD_LAST_MESSAGE":
       avatars = { ...state.avatars };
-      if (!avatars[action!.payload.name]) {
+      if (!Object.hasOwnProperty.call(avatars, action!.payload.name)) {
         avatars[action!.payload.name] = `${
           (Object.keys(state.avatars).length % AVATAR_NUMBER) + 1
         }`;

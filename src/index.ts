@@ -6,7 +6,6 @@ import thunk from "redux-thunk";
 import { Avatar, Message, State } from "./types";
 import chattingReducer from "./reducer";
 import {
-  addAvatar,
   addLastMessage,
   getMessages,
   sendMessageThunk,
@@ -60,10 +59,6 @@ function createMessage(message: Message, currentUser: string, avatars: Avatar) {
     messageTypeClass = "my-message";
     messageContentArr.push(`<img src="./img/user.png" alt="avatar">`);
   } else {
-    if (!Object.hasOwnProperty.call(avatars, message.name)) {
-      // FIXME dispatch in dispatch
-      store.dispatch(addAvatar(message.name));
-    }
     messageContentArr.push(
       `<img src="./img/${avatars[message.name]}.png" alt="avatar">`
     );

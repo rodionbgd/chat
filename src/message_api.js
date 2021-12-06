@@ -19,7 +19,8 @@ export async function getMessagesList() {
         ...el,
         date: new Date(el.date),
       }))
-    ).catch(()=>{});
+    )
+    .catch(() => {});
 }
 
 // /**

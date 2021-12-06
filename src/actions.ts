@@ -10,11 +10,6 @@ export const setName: ActionCreator<Action> = (name: string) => ({
   payload: name,
 });
 
-export const addAvatar: ActionCreator<Action> = (name: string) => ({
-  type: "ADD_AVATAR",
-  payload: name,
-});
-
 export const addLastMessage: ActionCreator<Action> = (message: Message) => ({
   type: "ADD_LAST_MESSAGE",
   payload: message,
