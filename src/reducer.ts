@@ -11,6 +11,8 @@ export default function chattingReducer(
   let nameIterator = 0;
   switch (action.type) {
     case "GET_MESSAGES":
+      if(!action.payload)
+        return state;
       action!.payload.forEach((message: any) => {
         if (typeof message.name === "string") namesSet.add(message.name);
       });

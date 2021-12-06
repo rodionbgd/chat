@@ -19,7 +19,7 @@ export async function getMessagesList() {
         ...el,
         date: new Date(el.date),
       }))
-    );
+    ).catch(()=>{});
 }
 
 // /**
@@ -29,7 +29,10 @@ export async function getMessagesList() {
 //  * @returns {boolean}
 //  */
 export async function sendMessage(data) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   return fetch(`${config.firebaseBaseUrl}/${config.firebaseCollection}`, {
+    signal: controller.signal,
     method: "POST",
     body: JSON.stringify({
       ...data,
@@ -39,7 +42,10 @@ export async function sendMessage(data) {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-  }).then((response) => response.json());
+  }).then((response) => {
+    response.json();
+    clearTimeout(timeoutId);
+  });
 }
 
 function observeWithXHR(cb) {

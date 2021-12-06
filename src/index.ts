@@ -144,9 +144,7 @@ export function init() {
   const renderMessageFieldSub = store.subscribe(() => {
     chat.innerHTML = renderMessageField(chat, chatHistory);
   });
-  store.subscribe(() => {
-    observeWithEventSource(updateMessage);
-  });
+  observeWithEventSource(updateMessage);
 
   // Listeners
   nameBtn.addEventListener("click", () => {
