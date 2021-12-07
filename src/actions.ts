@@ -14,7 +14,7 @@ export const addLastMessage: ActionCreator<Action> = (message: Message) => ({
   type: "ADD_LAST_MESSAGE",
   payload: message,
 });
-const createGetMessagesAction: ActionCreator<Action> = (
+export const createGetMessagesAction: ActionCreator<Action> = (
   messages: Message[]
 ) => ({
   type: "GET_MESSAGES",
@@ -28,7 +28,9 @@ export const getMessages: ThunkType =
     dispatch(createGetMessagesAction(messages));
   };
 
-const createSendMessageAction: ActionCreator<Action> = (message: Message) => ({
+export const createSendMessageAction: ActionCreator<Action> = (
+  message: Message
+) => ({
   type: "SEND_MESSAGE",
   payload: message,
 });

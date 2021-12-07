@@ -20,7 +20,7 @@ export const initialState: State = {
   lastMessage: {} as Message,
 };
 
-const store = createStore(
+export const store = createStore(
   chattingReducer,
   initialState,
   applyMiddleware(thunk)
