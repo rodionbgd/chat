@@ -15,8 +15,10 @@
 ![test-coverage](./badges/badge-lines.svg)
 ![sanity check](https://github.com/rodionbgd/chat/actions/workflows/sanity-check.yml/badge.svg)  
 
-## Chat is  a live app, when you should only set your nick, no registration no authorization. Start communicating here and now.
-<p align="center"><img width="350" src="readme/chat_descr.gif" alt=""></p>
+## Chat is  a live app, when you should only set your nick, no registration no authorization. Start communicating here and now.  
+
+<p align="center"><img width="350" src="readme/chat_descr.gif" alt=""></p>  
+
 ## 🪄 Features
 
 - Funny Futurama [avatars](https://github.com/rodionbgd/chat/tree/main/src/img) 
