@@ -1,5 +1,5 @@
 const config = {
-  firebaseBaseUrl: "https://chat-eee97-default-rtdb.firebaseio.com",
+  firebaseBaseUrl: "https://chat-78023-default-rtdb.firebaseio.com/",
   firebaseCollection: "messages.json",
 };
 
